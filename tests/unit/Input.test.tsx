@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@/utils/simple-test-utils';
-import { Input } from './Input';
+import { Input } from '@/components/ui/Input';
 
 describe('Input', () => {
   it('renders with label', () => {

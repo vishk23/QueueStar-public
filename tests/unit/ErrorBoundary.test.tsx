@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@/utils/simple-test-utils';
-import { ErrorBoundary } from './ErrorBoundary';
+import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 
 // Test component that throws an error
 const ThrowError = ({ shouldThrow }: { shouldThrow: boolean }) => {

@@ -2,14 +2,11 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { db } from '@/db';
 import { 
   users, 
-  userTopTracks,
-  userTopArtists,
-  userRecentlyPlayed,
-  userPlaylists,
-  userPlaylistTracks,
-  userSavedTracks,
-  userSavedAlbums,
-  userFollowedArtists,
+  spotifyTopTracks,
+  spotifyTopArtists,
+  spotifyRecentlyPlayed,
+  spotifyPlaylists,
+  spotifyPlaylistTracks,
   providerConnections
 } from '@/db/schema';
 import { eq, and, count } from 'drizzle-orm';
@@ -197,7 +194,7 @@ async function syncTopTracks(provider: any, userId: string) {
             trackMetadata: { originalTrack: track },
           }));
           
-          await db.insert(userTopTracks).values(trackRecords);
+          await db.insert(spotifyTopTracks).values(trackRecords);
         }
       }
     } catch (error) {
@@ -229,7 +226,7 @@ async function syncTopArtists(provider: any, userId: string) {
         artistMetadata: { originalArtist: artist },
       }));
       
-      await db.insert(userTopArtists).values(artistRecords);
+      await db.insert(spotifyTopArtists).values(artistRecords);
     }
   }
 }
@@ -252,7 +249,7 @@ async function syncRecentlyPlayed(provider: any, userId: string) {
       trackMetadata: { originalTrack: item },
     }));
     
-    await db.insert(userRecentlyPlayed).values(trackRecords);
+    await db.insert(spotifyRecentlyPlayed).values(trackRecords);
   }
 }
 
@@ -274,9 +271,9 @@ describe('Spotify Data Sync', () => {
 
   afterEach(async () => {
     // Clean up test data
-    await db.delete(userTopTracks).where(eq(userTopTracks.userId, testUserId));
-    await db.delete(userTopArtists).where(eq(userTopArtists.userId, testUserId));
-    await db.delete(userRecentlyPlayed).where(eq(userRecentlyPlayed.userId, testUserId));
+    await db.delete(spotifyTopTracks).where(eq(spotifyTopTracks.userId, testUserId));
+    await db.delete(spotifyTopArtists).where(eq(spotifyTopArtists.userId, testUserId));
+    await db.delete(spotifyRecentlyPlayed).where(eq(spotifyRecentlyPlayed.userId, testUserId));
     await db.delete(users).where(eq(users.id, testUserId));
   });
 
@@ -298,7 +295,7 @@ describe('Spotify Data Sync', () => {
       expect(mockSpotifyProvider.getTopTracks).toHaveBeenCalledWith('long', 50);
 
       // Verify database records
-      const dbTracks = await db.select().from(userTopTracks).where(eq(userTopTracks.userId, testUserId));
+      const dbTracks = await db.select().from(spotifyTopTracks).where(eq(spotifyTopTracks.userId, testUserId));
       expect(dbTracks).toHaveLength(6); // 2 tracks × 3 time ranges
 
       // Verify data structure
@@ -314,7 +311,7 @@ describe('Spotify Data Sync', () => {
 
       await syncTopTracks(mockSpotifyProvider, testUserId);
 
-      const dbTracks = await db.select().from(userTopTracks).where(eq(userTopTracks.userId, testUserId));
+      const dbTracks = await db.select().from(spotifyTopTracks).where(eq(spotifyTopTracks.userId, testUserId));
       expect(dbTracks).toHaveLength(0);
     });
 
@@ -326,7 +323,7 @@ describe('Spotify Data Sync', () => {
 
       await syncTopTracks(mockSpotifyProvider, testUserId);
 
-      const dbTracks = await db.select().from(userTopTracks).where(eq(userTopTracks.userId, testUserId));
+      const dbTracks = await db.select().from(spotifyTopTracks).where(eq(spotifyTopTracks.userId, testUserId));
       expect(dbTracks).toHaveLength(4); // Only medium_term and long_term succeeded
     });
   });
@@ -342,7 +339,7 @@ describe('Spotify Data Sync', () => {
 
       expect(mockSpotifyProvider.getTopArtists).toHaveBeenCalledTimes(3);
 
-      const dbArtists = await db.select().from(userTopArtists).where(eq(userTopArtists.userId, testUserId));
+      const dbArtists = await db.select().from(spotifyTopArtists).where(eq(spotifyTopArtists.userId, testUserId));
       expect(dbArtists).toHaveLength(6); // 2 artists × 3 time ranges
 
       const artist = dbArtists[0];
@@ -359,7 +356,7 @@ describe('Spotify Data Sync', () => {
 
       await syncRecentlyPlayed(mockSpotifyProvider, testUserId);
 
-      const dbTracks = await db.select().from(userRecentlyPlayed).where(eq(userRecentlyPlayed.userId, testUserId));
+      const dbTracks = await db.select().from(spotifyRecentlyPlayed).where(eq(spotifyRecentlyPlayed.userId, testUserId));
       expect(dbTracks).toHaveLength(1);
 
       const track = dbTracks[0];
@@ -376,8 +373,8 @@ describe('Spotify Data Sync', () => {
       await syncTopTracks(mockSpotifyProvider, testUserId);
 
       const firstSyncCount = await db.select({ count: count() })
-        .from(userTopTracks)
-        .where(eq(userTopTracks.userId, testUserId));
+        .from(spotifyTopTracks)
+        .where(eq(spotifyTopTracks.userId, testUserId));
 
       // Second sync with different data
       const newMockTracks = [{
@@ -392,18 +389,18 @@ describe('Spotify Data Sync', () => {
       await syncTopTracks(mockSpotifyProvider, testUserId);
 
       const secondSyncCount = await db.select({ count: count() })
-        .from(userTopTracks)
-        .where(eq(userTopTracks.userId, testUserId));
+        .from(spotifyTopTracks)
+        .where(eq(spotifyTopTracks.userId, testUserId));
 
       // Should have more records after second sync (append-only)
       expect(secondSyncCount[0].count).toBeGreaterThan(firstSyncCount[0].count);
 
       // Original data should still exist (could be multiple due to different time ranges)
       const originalTrack = await db.select()
-        .from(userTopTracks)
+        .from(spotifyTopTracks)
         .where(and(
-          eq(userTopTracks.userId, testUserId),
-          eq(userTopTracks.trackId, 'track1')
+          eq(spotifyTopTracks.userId, testUserId),
+          eq(spotifyTopTracks.spotifyTrackId, 'track1')
         ));
       expect(originalTrack.length).toBeGreaterThan(0);
     });
@@ -414,11 +411,11 @@ describe('Spotify Data Sync', () => {
       mockSpotifyProvider.getTopTracks.mockResolvedValueOnce(mockTopTracks);
       await syncTopTracks(mockSpotifyProvider, testUserId);
 
-      const dbTracks = await db.select().from(userTopTracks).where(eq(userTopTracks.userId, testUserId));
+      const dbTracks = await db.select().from(spotifyTopTracks).where(eq(spotifyTopTracks.userId, testUserId));
       const track = dbTracks[0];
 
-      expect(track.trackMetadata).toHaveProperty('originalTrack');
-      expect(track.trackMetadata.originalTrack).toMatchObject(mockTopTracks[0]);
+      expect(track.audioFeatures).toBeDefined();
+      expect(track.spotifyTrackId).toBe('track1');
       expect(track.fetchedAt).toBeInstanceOf(Date);
     });
 
@@ -436,7 +433,7 @@ describe('Spotify Data Sync', () => {
       mockSpotifyProvider.getTopTracks.mockResolvedValueOnce(tracksWithNulls);
       await syncTopTracks(mockSpotifyProvider, testUserId);
 
-      const dbTracks = await db.select().from(userTopTracks).where(eq(userTopTracks.userId, testUserId));
+      const dbTracks = await db.select().from(spotifyTopTracks).where(eq(spotifyTopTracks.userId, testUserId));
       const track = dbTracks[0];
 
       expect(track.albumName).toBeNull();
@@ -454,7 +451,7 @@ describe('Spotify Data Sync', () => {
       await expect(syncTopTracks(mockSpotifyProvider, testUserId)).resolves.toBeUndefined();
 
       // Should not have created any records
-      const dbTracks = await db.select().from(userTopTracks).where(eq(userTopTracks.userId, testUserId));
+      const dbTracks = await db.select().from(spotifyTopTracks).where(eq(spotifyTopTracks.userId, testUserId));
       expect(dbTracks).toHaveLength(0);
     });
 
@@ -495,26 +492,23 @@ describe('Database Schema Validation', () => {
 
   afterEach(async () => {
     // Clean up in correct order due to foreign key constraints
-    await db.delete(userTopTracks).where(eq(userTopTracks.userId, testUserId));
-    await db.delete(userTopArtists).where(eq(userTopArtists.userId, testUserId));
-    await db.delete(userRecentlyPlayed).where(eq(userRecentlyPlayed.userId, testUserId));
-    await db.delete(userPlaylists).where(eq(userPlaylists.userId, testUserId));
-    await db.delete(userPlaylistTracks).where(eq(userPlaylistTracks.userId, testUserId));
-    await db.delete(userSavedTracks).where(eq(userSavedTracks.userId, testUserId));
-    await db.delete(userSavedAlbums).where(eq(userSavedAlbums.userId, testUserId));
-    await db.delete(userFollowedArtists).where(eq(userFollowedArtists.userId, testUserId));
+    await db.delete(spotifyTopTracks).where(eq(spotifyTopTracks.userId, testUserId));
+    await db.delete(spotifyTopArtists).where(eq(spotifyTopArtists.userId, testUserId));
+    await db.delete(spotifyRecentlyPlayed).where(eq(spotifyRecentlyPlayed.userId, testUserId));
+    await db.delete(spotifyPlaylists).where(eq(spotifyPlaylists.userId, testUserId));
+    await db.delete(spotifyPlaylistTracks).where(eq(spotifyPlaylistTracks.userId, testUserId));
     await db.delete(users).where(eq(users.id, testUserId));
   });
 
   it('should enforce foreign key constraints', async () => {
     // Try to insert track with non-existent user_id
     await expect(
-      db.insert(userTopTracks).values({
+      db.insert(spotifyTopTracks).values({
         userId: 'non-existent-user-id',
-        provider: 'spotify',
-        trackId: 'test-track',
+        spotifyTrackId: 'test-track',
         trackName: 'Test Track',
         artistName: 'Test Artist',
+        albumName: 'Test Album',
         timeRange: 'short_term',
         rank: 1,
       })
@@ -524,27 +518,27 @@ describe('Database Schema Validation', () => {
   it('should enforce enum constraints', async () => {
     // Try to insert with invalid provider
     await expect(
-      db.insert(userTopTracks).values({
+      db.insert(spotifyTopTracks).values({
         userId: testUserId,
-        provider: 'invalid_provider' as any,
-        trackId: 'test-track',
+        spotifyTrackId: 'test-track',
         trackName: 'Test Track',
         artistName: 'Test Artist',
-        timeRange: 'short_term',
+        albumName: 'Test Album',
+        timeRange: 'invalid_range' as any,
         rank: 1,
       })
     ).rejects.toThrow();
 
     // Try to insert with invalid time_range
     await expect(
-      db.insert(userTopTracks).values({
+      db.insert(spotifyTopTracks).values({
         userId: testUserId,
-        provider: 'spotify',
-        trackId: 'test-track',
-        trackName: 'Test Track',
-        artistName: 'Test Artist',
+        spotifyTrackId: 'test-track-2',
+        trackName: 'Test Track 2',
+        artistName: 'Test Artist 2',
+        albumName: 'Test Album 2',
         timeRange: 'invalid_range' as any,
-        rank: 1,
+        rank: 2,
       })
     ).rejects.toThrow();
   });
@@ -553,18 +547,17 @@ describe('Database Schema Validation', () => {
     // Test each table with valid data
     const validTrack = {
       userId: testUserId,
-      provider: 'spotify' as const,
-      trackId: 'valid-track',
+      spotifyTrackId: 'valid-track',
       trackName: 'Valid Track',
       artistName: 'Valid Artist',
+      albumName: 'Valid Album',
       timeRange: 'short_term' as const,
       rank: 1,
     };
 
     const validArtist = {
       userId: testUserId,
-      provider: 'spotify' as const,
-      artistId: 'valid-artist',
+      spotifyArtistId: 'valid-artist',
       artistName: 'Valid Artist',
       timeRange: 'short_term' as const,
       rank: 1,
@@ -572,16 +565,16 @@ describe('Database Schema Validation', () => {
 
     const validRecentTrack = {
       userId: testUserId,
-      provider: 'spotify' as const,
-      trackId: 'valid-recent-track',
+      spotifyTrackId: 'valid-recent-track',
       trackName: 'Valid Recent Track',
       artistName: 'Valid Recent Artist',
+      albumName: 'Valid Recent Album',
       playedAt: new Date(),
     };
 
     // Insert should succeed
-    await expect(db.insert(userTopTracks).values(validTrack)).resolves.not.toThrow();
-    await expect(db.insert(userTopArtists).values(validArtist)).resolves.not.toThrow();
-    await expect(db.insert(userRecentlyPlayed).values(validRecentTrack)).resolves.not.toThrow();
+    await expect(db.insert(spotifyTopTracks).values(validTrack)).resolves.not.toThrow();
+    await expect(db.insert(spotifyTopArtists).values(validArtist)).resolves.not.toThrow();
+    await expect(db.insert(spotifyRecentlyPlayed).values(validRecentTrack)).resolves.not.toThrow();
   });
 });

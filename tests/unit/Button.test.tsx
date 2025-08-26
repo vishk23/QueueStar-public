@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@/utils/simple-test-utils';
-import { Button } from './Button';
+import { Button } from '@/components/ui/Button';
 
 // Mock Next.js Link component
 vi.mock('next/link', () => ({

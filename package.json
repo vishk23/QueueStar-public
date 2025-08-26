@@ -23,12 +23,12 @@
     "docker:down": "docker-compose down",
     "docker:logs": "docker-compose logs -f",
     "docker:db": "docker exec -it queuestar-db psql -U postgres queuestar_dev",
-    "test": "vitest",
-    "test:ui": "vitest --ui",
-    "test:coverage": "vitest --coverage",
-    "test:integration": "vitest tests/integration --run",
-    "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
+    "test": "vitest --config config/vitest.config.ts",
+    "test:ui": "vitest --ui --config config/vitest.config.ts",
+    "test:coverage": "vitest --coverage --config config/vitest.config.ts",
+    "test:integration": "vitest tests/integration --run --config config/vitest.config.ts",
+    "test:e2e": "playwright test --config config/playwright.config.ts",
+    "test:e2e:ui": "playwright test --ui --config config/playwright.config.ts"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.59.0",

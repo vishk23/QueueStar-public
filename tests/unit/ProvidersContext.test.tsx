@@ -3,11 +3,11 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@/utils/simple-test-utils';
-import { ProvidersProvider, useProviders } from './ProvidersContext';
-import { useAuth } from './AuthContext';
+import { ProvidersProvider, useProviders } from '@/contexts/ProvidersContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Mock the auth context
-vi.mock('./AuthContext', () => ({
+vi.mock('@/contexts/AuthContext', () => ({
   useAuth: vi.fn(),
 }));
 

@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@/utils/simple-test-utils';
-import { Toaster } from './Toaster';
+import { Toaster } from '@/components/ui/Toaster';
 import { UIProvider, useUI } from '@/contexts/UIContext';
 
 // Test component to trigger toasts
@@ -14,7 +14,6 @@ const TestComponent = () => {
     <div>
       <button 
         onClick={() => showToast({ 
-          id: 'test-1', 
           title: 'Success', 
           message: 'Operation completed',
           type: 'success' 
@@ -25,7 +24,6 @@ const TestComponent = () => {
       </button>
       <button 
         onClick={() => showToast({ 
-          id: 'test-2', 
           title: 'Error', 
           type: 'error' 
         })}
@@ -35,7 +33,6 @@ const TestComponent = () => {
       </button>
       <button 
         onClick={() => showToast({ 
-          id: 'test-3', 
           title: 'Warning', 
           message: 'Please check this',
           type: 'warning' 
@@ -46,7 +43,6 @@ const TestComponent = () => {
       </button>
       <button 
         onClick={() => showToast({ 
-          id: 'test-4', 
           title: 'Info', 
           type: 'info' 
         })}

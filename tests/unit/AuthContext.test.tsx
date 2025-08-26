@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
-import { AuthProvider, useAuth } from './AuthContext';
+import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 
 // Mock fetch
 const mockFetch = vi.fn();
@@ -79,16 +79,29 @@ describe('AuthContext', () => {
     expect(result.current.user).toBeNull();
   });
 
-  it('handles login by redirecting to OAuth', async () => {
+  it('handles email/password login', async () => {
+    const mockUser = {
+      id: '1',
+      email: 'test@example.com',
+      displayName: 'Test User',
+      createdAt: '2023-01-01T00:00:00Z',
+    };
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ user: mockUser }),
+    });
+
     const { result } = renderHook(() => useAuth(), {
       wrapper: AuthProvider,
     });
 
-    act(() => {
-      result.current.login('spotify');
+    await act(async () => {
+      await result.current.login('test@example.com', 'password');
     });
 
-    expect(window.location.href).toBe('/api/auth/spotify');
+    expect(result.current.isAuthenticated).toBe(true);
+    expect(result.current.user).toEqual(mockUser);
   });
 
   it('handles logout', async () => {
