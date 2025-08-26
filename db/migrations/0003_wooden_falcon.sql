@@ -1,0 +1,1 @@
+ALTER TABLE "apple_heavy_rotation" ALTER COLUMN "sync_version" SET DATA TYPE text;
